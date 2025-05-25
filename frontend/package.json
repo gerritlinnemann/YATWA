@@ -1,0 +1,18 @@
+{
+  "name": "yatwa-frontend",
+  "version": "1.0.0",
+  "description": "YATWA Frontend - Yet Another Trash Web App",
+  "type": "module",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "test": "web-test-runner",
+    "test:watch": "web-test-runner --watch",
+    "build": "echo 'No build step needed for vanilla JS'",
+    "lint": "eslint src/**/*.js"
+  },
+  "devDependencies": {
+    "@web/test-runner": "^0.18.0",
+    "@web/test-runner-playwright": "^0.11.0",
+    "eslint": "^8.0.0"
+  }
+}
