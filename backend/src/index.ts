@@ -1,7 +1,7 @@
-// 🚀 YATWA Backend - Complete Server with Hash System
+// 🚀 YATWA Backend - Complete Server with Secure CORS & Hash System
 import { Database } from './services/database';
 import { createRouter } from './routes';
-import { corsHeaders } from './utils/core';
+import { securityMiddleware, debugCorsConfig } from './utils/core';
 
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -10,47 +10,34 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const db = new Database();
 const router = createRouter(db);
 
-// 🎯 Bun server
+// Debug CORS configuration on startup
+debugCorsConfig();
+
+// 🎯 Bun server with Security Middleware
 const server = Bun.serve({
     port: PORT,
     async fetch(req: Request): Promise<Response> {
         const url = new URL(req.url);
 
-        // Handle CORS preflight
-        if (req.method === 'OPTIONS') {
-            return new Response(null, { status: 204, headers: corsHeaders });
-        }
+        // Security Middleware handles everything: CORS, Rate Limiting, Origin Validation
+        return securityMiddleware(req, async (request) => {
+            try {
+                // Route the request
+                const response = await router.handle(request, url);
+                return response;
 
-        try {
-            // Route the request
-            const response = await router.handle(req, url);
+            } catch (error) {
+                console.error('❌ Server error:', error);
 
-            // Add CORS headers
-            const headers = new Headers(response.headers);
-            Object.entries(corsHeaders).forEach(([key, value]) => {
-                headers.set(key, value);
-            });
-
-            return new Response(response.body, {
-                status: response.status,
-                statusText: response.statusText,
-                headers
-            });
-
-        } catch (error) {
-            console.error('❌ Server error:', error);
-
-            return new Response(JSON.stringify({
-                error: 'Interner Serverfehler',
-                message: NODE_ENV === 'development' ? error.message : undefined
-            }), {
-                status: 500,
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...corsHeaders
-                }
-            });
-        }
+                return new Response(JSON.stringify({
+                    error: 'Interner Serverfehler',
+                    message: NODE_ENV === 'development' ? error.message : undefined
+                }), {
+                    status: 500,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+        })();
     },
 });
 
@@ -58,11 +45,31 @@ console.log(`
 🚀 YATWA Backend started!
 📍 Port: ${server.port}
 🌍 Environment: ${NODE_ENV}
-🗄️  Database: ${db.isConnected() ? '✅ Connected' : '❌ Disconnected'}
+🔒 CORS Mode: ${NODE_ENV === 'production' ? 'Production (Secure)' : 'Development (Open)'}
+🗄️ Database: ${db.isConnected() ? '✅ Connected' : '❌ Disconnected'}
 🎯 Health Check: http://localhost:${server.port}/api/health
 📋 Registration: http://localhost:${server.port}/api/register
-🔐 Verification: http://localhost:${server.port}/api/verify
+🔐 Verification: http://localhost:${server.port}/api/verify?hash={HASH}
 `);
+
+// Development: Zeige CORS-Info
+if (NODE_ENV === 'development') {
+    console.log(`
+📋 CORS Configuration:
+   • Origin: * (alle erlaubt)
+   • Credentials: false
+   • Methods: GET, POST, PUT, DELETE, OPTIONS
+   
+🔒 Production wird strenge Origin-Validierung verwenden
+`);
+} else {
+    console.log(`
+🔒 Production CORS Configuration:
+   • Allowed Origins: ${process.env.FRONTEND_URL || 'ENV not set'}
+   • Credentials: true
+   • Rate Limiting: Active (100 req/min)
+`);
+}
 
 // Graceful shutdown
 process.on('SIGINT', async () => {

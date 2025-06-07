@@ -8,7 +8,7 @@
     "test": "web-test-runner",
     "test:watch": "web-test-runner --watch",
     "build": "echo 'No build step needed for vanilla JS'",
-    "lint": "eslint src/**/*.js"
+    "lint": "eslint public/src/**/*.js"
   },
   "devDependencies": {
     "@web/test-runner": "^0.18.0",

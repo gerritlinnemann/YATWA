@@ -20,9 +20,9 @@ export class UserModel {
      */
     async create(userData: CreateUserData): Promise<User> {
         const sql = `
-      INSERT INTO users (hash, created_at, last_accessed)
-      VALUES (?, NOW(), NOW())
-    `;
+          INSERT INTO users (hash, created_at, last_accessed)
+          VALUES (?, NOW(), NOW())
+        `;
 
         const result = await this.db.insert(sql, [userData.hash]);
 
@@ -40,10 +40,10 @@ export class UserModel {
      */
     async findByHash(hash: string): Promise<User | null> {
         const sql = `
-      SELECT id, hash, created_at, last_accessed
-      FROM users
-      WHERE hash = ?
-    `;
+          SELECT id, hash, created_at, last_accessed
+          FROM users
+          WHERE hash = ?
+        `;
 
         return await this.db.queryOne<User>(sql, [hash]);
     }
@@ -53,10 +53,10 @@ export class UserModel {
      */
     async exists(hash: string): Promise<boolean> {
         const sql = `
-      SELECT COUNT(*) as count
-      FROM users
-      WHERE hash = ?
-    `;
+          SELECT COUNT(*) as count
+          FROM users
+          WHERE hash = ?
+        `;
 
         const result = await this.db.queryOne<{ count: number }>(sql, [hash]);
         return (result?.count || 0) > 0;
@@ -67,10 +67,10 @@ export class UserModel {
      */
     async updateLastAccessed(hash: string): Promise<boolean> {
         const sql = `
-      UPDATE users
-      SET last_accessed = NOW()
-      WHERE hash = ?
-    `;
+          UPDATE users
+          SET last_accessed = NOW()
+          WHERE hash = ?
+        `;
 
         const affectedRows = await this.db.update(sql, [hash]);
         return affectedRows > 0;
@@ -90,10 +90,10 @@ export class UserModel {
 
         // Get event count
         const eventCountSql = `
-      SELECT COUNT(*) as count
-      FROM events
-      WHERE user_hash = ?
-    `;
+          SELECT COUNT(*) as count
+          FROM events
+          WHERE user_hash = ?
+        `;
         const eventResult = await this.db.queryOne<{ count: number }>(eventCountSql, [hash]);
         const eventCount = eventResult?.count || 0;
 
@@ -115,11 +115,11 @@ export class UserModel {
      */
     async getAll(limit: number = 100): Promise<User[]> {
         const sql = `
-      SELECT id, hash, created_at, last_accessed
-      FROM users
-      ORDER BY created_at DESC
-      LIMIT ?
-    `;
+          SELECT id, hash, created_at, last_accessed
+          FROM users
+          ORDER BY created_at DESC
+          LIMIT ?
+        `;
 
         return await this.db.query<User>(sql, [limit]);
     }
@@ -143,13 +143,14 @@ export class UserModel {
     }
 
     /**
-     * Cleanup old inactive users (for maintenance)
+     * Cleanup old inactive users (for maintenance).
+     * Default 2 years.
      */
-    async cleanupInactiveUsers(daysInactive: number = 365): Promise<number> {
+    async cleanupInactiveUsers(daysInactive: number = 730): Promise<number> {
         const sql = `
-      DELETE FROM users
-      WHERE last_accessed < DATE_SUB(NOW(), INTERVAL ? DAY)
-    `;
+          DELETE FROM users
+          WHERE last_accessed < DATE_SUB(NOW(), INTERVAL ? DAY)
+        `;
 
         const affectedRows = await this.db.delete(sql, [daysInactive]);
         console.log(`🧹 Cleaned up ${affectedRows} inactive users (older than ${daysInactive} days)`);
@@ -167,13 +168,13 @@ export class UserModel {
         activeThisMonth: number;
     }> {
         const sql = `
-      SELECT 
-        COUNT(*) as totalUsers,
-        COUNT(CASE WHEN last_accessed >= CURDATE() THEN 1 END) as activeToday,
-        COUNT(CASE WHEN last_accessed >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN 1 END) as activeThisWeek,
-        COUNT(CASE WHEN last_accessed >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 END) as activeThisMonth
-      FROM users
-    `;
+          SELECT 
+            COUNT(*) as totalUsers,
+            COUNT(CASE WHEN last_accessed >= CURDATE() THEN 1 END) as activeToday,
+            COUNT(CASE WHEN last_accessed >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN 1 END) as activeThisWeek,
+            COUNT(CASE WHEN last_accessed >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN 1 END) as activeThisMonth
+          FROM users
+        `;
 
         const result = await this.db.queryOne<{
             totalUsers: number;

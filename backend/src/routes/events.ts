@@ -172,7 +172,7 @@ export const eventRoutes = {
                 title: ValidationService.sanitizeString(eventData.title),
                 event_date: eventData.event_date,
                 event_time: eventData.event_time ? ValidationService.formatTimeString(eventData.event_time) : null,
-                icon: eventData.icon || 'calendar',
+                icon: eventData.icon || '📅',
                 description: eventData.description ? ValidationService.sanitizeString(eventData.description) : null
             };
 
@@ -451,10 +451,9 @@ export const eventRoutes = {
 
     getAvailableIcons: (db: Database) => async (req: Request, params: Record<string, string>): Promise<Response> => {
         const icons = [
-            'calendar', 'meeting', 'birthday', 'reminder', 'work', 'personal',
-            'travel', 'health', 'shopping', 'sports', 'education', 'entertainment',
-            'family', 'friends', 'important', 'deadline', 'appointment', 'event',
-            'conference', 'party', 'vacation', 'anniversary', 'project', 'task'
+            '📅', '🗓️', '⏰', '🔔', '📝', '💼', '🏠', '🚗', '✈️', '🎉',
+            '🍽️', '💊', '🏥', '🎓', '💪', '🛒', '📞', '💻', '🎵', '📚',
+            '🧹', '🗑️', '♻️', '🚮', '🏃', '🎯', '💡', '⭐', '❤️', '🎁'
         ];
 
         return new Response(JSON.stringify({

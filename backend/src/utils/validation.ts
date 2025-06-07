@@ -14,10 +14,9 @@ export interface EventValidationData {
 
 // Available icons for events
 export const VALID_ICONS = [
-    'calendar', 'meeting', 'birthday', 'reminder', 'work', 'personal',
-    'travel', 'health', 'shopping', 'sports', 'education', 'entertainment',
-    'family', 'friends', 'important', 'deadline', 'appointment', 'event',
-    'conference', 'party', 'vacation', 'anniversary', 'project', 'task'
+    '📅', '🗓️', '⏰', '🔔', '📝', '💼', '🏠', '🚗', '✈️', '🎉',
+    '🍽️', '💊', '🏥', '🎓', '💪', '🛒', '📞', '💻', '🎵', '📚',
+    '🧹', '🗑️', '♻️', '🚮', '🏃', '🎯', '💡', '⭐', '❤️', '🎁'
 ];
 
 export class ValidationService {

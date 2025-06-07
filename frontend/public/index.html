@@ -3,11 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO & Description -->
     <title>YATWA - Yet Another Trash Web App</title>
+    <meta name="description" content="Einfache Terminverwaltung für Müllabfuhrtage.">
+    <meta name="keywords" content="kalender, termine, events, ical, müll, entsorgung, abfall">
+    <meta name="author" content="YATWA">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="YATWA - Yet Another Trash Web App">
+    <meta property="og:description" content="Einfache Terminverwaltung ohne Registrierung">
+    <meta property="og:url" content="https://yatwa.app">
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="YATWA">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon.ico">
+    <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/assets/manifest.json">
+
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="/styles.css" as="style">
+    <link rel="preload" href="/app.js" as="script">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<h1>🗓️ YATWA</h1>
-<p>Frontend Container läuft!</p>
-<p>Backend API: <a href="http://localhost:3000/api/health">Health Check</a></p>
+<!-- App Container -->
+<div id="app">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">🗓️</div>
+            <h1 class="loading-title">YATWA</h1>
+            <p class="loading-subtitle">Yet Another Trash Web App</p>
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+            <p class="loading-text">Loading your calendar...</p>
+        </div>
+    </div>
+
+    <!-- Main App Content (wird von JavaScript gefüllt) -->
+    <div id="app-content" class="app-content" style="display: none;">
+        <!-- Content wird von app.js hier eingefügt -->
+    </div>
+
+    <!-- Error Fallback -->
+    <div id="error-screen" class="error-screen" style="display: none;">
+        <div class="error-content">
+            <div class="error-icon">🥲</div>
+            <h2 class="error-title">Oops! Something went wrong</h2>
+            <p class="error-message">We're having trouble loading your calendar. Please try refreshing the page.</p>
+            <div class="error-actions">
+                <button onclick="location.reload()" class="btn btn-primary">
+                    🔄 Refresh Page
+                </button>
+                <button onclick="showDebugInfo()" class="btn btn-secondary">
+                    🔍 Debug Info
+                </button>
+            </div>
+            <div id="debug-info" class="debug-info" style="display: none;">
+                <h3>Debug Information:</h3>
+                <ul>
+                    <li>User Agent: <code id="debug-ua"></code></li>
+                    <li>URL: <code id="debug-url"></code></li>
+                    <li>Timestamp: <code id="debug-time"></code></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification Container -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- Scripts -->
+<script>
+    // Global Error Handling
+    window.addEventListener('error', function(event) {
+        console.error('Global Error:', event.error);
+        showErrorScreen('JavaScript Error: ' + event.error.message);
+    });
+
+    window.addEventListener('unhandledrejection', function(event) {
+        console.error('Unhandled Promise Rejection:', event.reason);
+        showErrorScreen('Promise Rejection: ' + event.reason);
+    });
+
+    // Show Error Screen
+    function showErrorScreen(errorMsg) {
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('app-content').style.display = 'none';
+        document.getElementById('error-screen').style.display = 'flex';
+
+        // Update error message if provided
+        if (errorMsg) {
+            document.querySelector('.error-message').textContent = errorMsg;
+        }
+    }
+
+    // Show Debug Info
+    function showDebugInfo() {
+        const debugInfo = document.getElementById('debug-info');
+        debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
+
+        // Fill debug info
+        document.getElementById('debug-ua').textContent = navigator.userAgent;
+        document.getElementById('debug-url').textContent = window.location.href;
+        document.getElementById('debug-time').textContent = new Date().toISOString();
+    }
+
+    // App Initialization
+    function initializeApp() {
+        try {
+            // Hide loading screen
+            document.getElementById('loading-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+
+                // Fade in app content
+                setTimeout(() => {
+                    document.getElementById('app-content').style.opacity = '1';
+                }, 50);
+            }, 300);
+
+            // Dispatch app ready event
+            window.dispatchEvent(new CustomEvent('app-ready'));
+
+        } catch (error) {
+            console.error('App initialization failed:', error);
+            showErrorScreen('Failed to initialize app: ' + error.message);
+        }
+    }
+
+    // Theme Detection & Application
+    function initializeTheme() {
+        // Check for saved theme
+        const savedTheme = localStorage.getItem('yatwa-theme');
+
+        // Detect system preference
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        // Apply theme
+        const theme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('yatwa-theme')) {
+                document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+            }
+        });
+    }
+
+    // Service Worker Registration (PWA)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            // Note: service-worker.js wird später erstellt
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('SW registered:', registration);
+                })
+                .catch(registrationError => {
+                    console.log('SW registration failed:', registrationError);
+                });
+        });
+    }
+
+    // Initialize theme immediately
+    initializeTheme();
+
+    // Check if app.js loaded successfully
+    let appLoadTimeout = setTimeout(() => {
+        console.error('app.js failed to load within 10 seconds');
+        showErrorScreen('Failed to load application. Please check your internet connection and try again.');
+    }, 10000);
+
+    // This will be called by app.js when it loads
+    window.appLoaded = function() {
+        clearTimeout(appLoadTimeout);
+        initializeApp();
+    };
+
+    // Keyboard Shortcuts (Global)
+    document.addEventListener('keydown', function(event) {
+        // Escape key - close modals/dropdowns
+        if (event.key === 'Escape') {
+            window.dispatchEvent(new CustomEvent('escape-pressed'));
+        }
+
+        // Cmd/Ctrl + R - Reload (allow default)
+        if ((event.metaKey || event.ctrlKey) && event.key === 'r') {
+            // Allow default browser reload
+            return;
+        }
+
+        // Cmd/Ctrl + Shift + I - Developer Tools (allow default)
+        if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === 'I') {
+            return;
+        }
+    });
+
+    // Performance Monitoring
+    window.addEventListener('load', function() {
+        // Log performance metrics
+        if (window.performance && window.performance.timing) {
+            const timing = window.performance.timing;
+            const loadTime = timing.loadEventEnd - timing.navigationStart;
+            console.log('Page load time:', loadTime + 'ms');
+        }
+    });
+</script>
+
+<!-- Load Main Application -->
+<script type="module" src="/app.js"></script>
 </body>
 </html>
