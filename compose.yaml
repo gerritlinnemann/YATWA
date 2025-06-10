@@ -1,0 +1,80 @@
+services:
+  # 🌐 Frontend - Nginx serving static Web Components
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend/public:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+    networks:
+      - yatwa-network
+    restart: unless-stopped
+
+  # ⚡ Backend - Bun API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend/src:/app/src:ro
+    environment:
+      - NODE_ENV=development
+      - DATABASE_HOST=mariadb
+      - DATABASE_PORT=3306
+      - DATABASE_NAME=${DB_NAME:-yatwa}
+      - DATABASE_USER=${DB_USER:-yatwa_user}
+      - DATABASE_PASSWORD=${DB_PASSWORD:-yatwa_secret}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-hash-key}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - APP_URL=${APP_URL:-http://localhost}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - yatwa-network
+    restart: unless-stopped
+    command: bun run --watch src/index.ts
+
+  # 🗄️ Database - MariaDB
+  mariadb:
+    image: mariadb:11.2
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-rootsecret}
+      - MYSQL_DATABASE=${DB_NAME:-yatwa}
+      - MYSQL_USER=${DB_USER:-yatwa_user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-yatwa_secret}
+    volumes:
+      - yatwa_db_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - yatwa-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+# 🌐 Networks
+networks:
+  yatwa-network:
+    driver: bridge
+    name: yatwa-network
+
+# 💾 Volumes
+volumes:
+  yatwa_db_data:
+    driver: local
+    name: yatwa_db_data

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YATWA - Software-Architektur</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .component {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .component:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .component.active {
+            border-color: #667eea;
+            transform: translateY(-5px);
+        }
+
+        .component-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .component-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .frontend-icon { background: #3498db; }
+        .backend-icon { background: #e74c3c; }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .tech-tag {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+            color: #555;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            color: #27ae60;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .data-flow {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .flow-step {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .flow-arrow {
+            font-size: 1.5em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .api-endpoints {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .endpoint {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .method {
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.8em;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .get { background: #27ae60; color: white; }
+        .post { background: #3498db; color: white; }
+        .put { background: #f39c12; color: white; }
+        .delete { background: #e74c3c; color: white; }
+
+        .details-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .details-panel.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .security-note {
+            background: linear-gradient(45deg, #ff6b6b, #ffa07a);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .deployment-diagram {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .deploy-box {
+            background: white;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .architecture-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .flow-diagram {
+                flex-direction: column;
+            }
+            
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗓️ YATWA - Software-Architektur</h1>
+        <p style="text-align: center; color: #7f8c8d; font-size: 1.1em; margin-bottom: 30px;">
+            "Yet Another Trash Web App" - Einfache Terminverwaltung mit iCal-Synchronisation
+        </p>
+
+        <div class="architecture-grid">
+            <div class="component" id="frontend-component">
+                <div class="component-title">
+                    <div class="component-icon frontend-icon">FE</div>
+                    Frontend Web App
+                </div>
+                <div class="tech-stack">
+                    <span class="tech-tag">Vanilla JavaScript</span>
+                    <span class="tech-tag">Web Components</span>
+                    <span class="tech-tag">Modern CSS</span>
+                    <span class="tech-tag">Web Test Runner</span>
+                </div>
+                <ul class="feature-list">
+                    <li>Hash-basierte Authentifizierung</li>
+                    <li>Termine mit Label & Icon erfassen</li>
+                    <li>Kalender-Darstellung</li>
+                    <li>iCal-Abonnement Link</li>
+                    <li>Web Components Unit Tests</li>
+                </ul>
+            </div>
+
+            <div class="component" id="backend-component">
+                <div class="component-title">
+                    <div class="component-icon backend-icon">BE</div>
+                    Backend API
+                </div>
+                <div class="tech-stack">
+                    <span class="tech-tag">Bun Runtime</span>
+                    <span class="tech-tag">MariaDB</span>
+                    <span class="tech-tag">RESTful API</span>
+                    <span class="tech-tag">Bun:test</span>
+                </div>
+                <ul class="feature-list">
+                    <li>Hash-Generierung & Validierung</li>
+                    <li>CRUD Operationen für Termine</li>
+                    <li>iCal Feed Generierung</li>
+                    <li>E-Mail Link-Versand</li>
+                    <li>Integrierte API Unit Tests</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="data-flow">
+            <h3>🔄 Datenfluss & Benutzerinteraktion</h3>
+            <div class="flow-diagram">
+                <div class="flow-step">Erstbesuch<br>Hash generieren</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">E-Mail eingeben<br>Link senden</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">Termine erfassen<br>& verwalten</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">iCal abonnieren<br>& synchronisieren</div>
+            </div>
+        </div>
+
+        <div class="details-panel" id="frontend-details">
+            <h3>Frontend - Web Components & Testing</h3>
+            <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <strong>🧪 Web Test Runner:</strong> Native Browser-Tests für Web Components, ES Modules Support, echte DOM-APIs
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 15px;">
+                <div style="background: white; padding: 15px; border-radius: 8px;">
+                    <strong>&lt;yatwa-app&gt;</strong><br>
+                    Haupt-Container-Komponente
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px;">
+                    <strong>&lt;yatwa-auth&gt;</strong><br>
+                    Hash-Authentifizierung
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px;">
+                    <strong>&lt;yatwa-form&gt;</strong><br>
+                    Termin-Eingabeformular
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px;">
+                    <strong>&lt;yatwa-calendar&gt;</strong><br>
+                    Kalender-Darstellung
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px;">
+                    <strong>&lt;yatwa-export&gt;</strong><br>
+                    iCal-Export-Button
+                </div>
+            </div>
+            <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                <strong>🎯 Test-Abdeckung:</strong><br>
+                • Component Rendering & Shadow DOM<br>
+                • Event Handling & Custom Events<br>
+                • API Integration & Mock Responses<br>
+                • User Interaction & Form Validation
+            </div>
+        </div>
+
+        <div class="details-panel" id="backend-details">
+            <h3>Backend - Bun-basierte API</h3>
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <strong>🚀 Bun-Vorteile:</strong> Ultraschnelle Startup-Zeit, eingebauter Bundler, TypeScript-Support, kompatibel mit Node.js-APIs
+            </div>
+            <div class="api-endpoints">
+                <div class="endpoint">
+                    <span class="method post">POST</span>
+                    <span>/api/register</span>
+                    <span>- Hash generieren & E-Mail senden</span>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span>
+                    <span>/api/events/:hash</span>
+                    <span>- Termine für Hash abrufen</span>
+                </div>
+                <div class="endpoint">
+                    <span class="method post">POST</span>
+                    <span>/api/events/:hash</span>
+                    <span>- Neuen Termin erstellen</span>
+                </div>
+                <div class="endpoint">
+                    <span class="method put">PUT</span>
+                    <span>/api/events/:hash/:id</span>
+                    <span>- Termin bearbeiten</span>
+                </div>
+                <div class="endpoint">
+                    <span class="method delete">DELETE</span>
+                    <span>/api/events/:hash/:id</span>
+                    <span>- Termin löschen</span>
+                </div>
+                <div class="endpoint">
+                    <span class="method get">GET</span>
+                    <span>/api/ical/:hash</span>
+                    <span>- iCal Feed generieren</span>
+                </div>
+            </div>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                <strong>📊 MariaDB Schema:</strong><br>
+                • users (id, hash, created_at)<br>
+                • events (id, user_hash, title, date, icon, created_at, updated_at)
+            </div>
+        </div>
+
+        <div class="security-note">
+            <h3>🔒 Sicherheits-Konzept</h3>
+            <p>Hash-basierte Authentifizierung ohne Passwörter. Der Hash fungiert als einziger Schlüssel - sollte kryptographisch sicher sein (z.B. SHA-256 mit Salt). E-Mail-Adressen werden nicht gespeichert, nur für einmaligen Link-Versand verwendet.</p>
+        </div>
+
+        <div class="data-flow">
+            <h3>🚀 Docker-Container-Architektur</h3>
+            <div class="deployment-diagram">
+                <div class="deploy-box">
+                    <h4>🌐 Frontend Container</h4>
+                    <p>Nginx + Static Files<br>Web Components App</p>
+                </div>
+                <div class="deploy-box">
+                    <h4>⚡ Backend Container</h4>
+                    <p>Bun Runtime<br>REST API Server</p>
+                </div>
+                <div class="deploy-box">
+                    <h4>🗄️ Database Container</h4>
+                    <p>MariaDB<br>Persistent Storage</p>
+                </div>
+            </div>
+            <div style="background: #e8f4fd; padding: 20px; border-radius: 10px; margin-top: 15px;">
+                <h4>🐳 Docker Compose Orchestrierung</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 5px 0;">📦 Gemeinsames Docker-Netzwerk für Container-Kommunikation</li>
+                    <li style="padding: 5px 0;">🔄 Automatische Service-Discovery zwischen Containern</li>
+                    <li style="padding: 5px 0;">💾 Persistent Volume für MariaDB-Daten</li>
+                    <li style="padding: 5px 0;">🌍 Port-Mapping: Frontend (80), Backend (3000), DB (3306)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Interaktive Komponenten
+        const frontendComponent = document.getElementById('frontend-component');
+        const backendComponent = document.getElementById('backend-component');
+        const frontendDetails = document.getElementById('frontend-details');
+        const backendDetails = document.getElementById('backend-details');
+
+        frontendComponent.addEventListener('click', () => {
+            toggleComponent(frontendComponent, frontendDetails, backendComponent, backendDetails);
+        });
+
+        backendComponent.addEventListener('click', () => {
+            toggleComponent(backendComponent, backendDetails, frontendComponent, frontendDetails);
+        });
+
+        function toggleComponent(activeComp, activeDetails, inactiveComp, inactiveDetails) {
+            // Toggle active component
+            activeComp.classList.toggle('active');
+            activeDetails.classList.toggle('active');
+            
+            // Deactivate other component if this one is being activated
+            if (activeComp.classList.contains('active')) {
+                inactiveComp.classList.remove('active');
+                inactiveDetails.classList.remove('active');
+            }
+        }
+
+        // Animation für Flow-Steps
+        const flowSteps = document.querySelectorAll('.flow-step');
+        flowSteps.forEach((step, index) => {
+            step.style.animationDelay = `${index * 0.2}s`;
+            step.style.animation = 'fadeIn 0.6s ease forwards';
+        });
+    </script>
+</body>
+</html>
