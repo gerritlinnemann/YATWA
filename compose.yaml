@@ -46,7 +46,7 @@ services:
 
   # 🗄️ Database - MariaDB
   mariadb:
-    image: mariadb:11.2
+    image: mariadb:11.8.2
     ports:
       - "3306:3306"
     environment:

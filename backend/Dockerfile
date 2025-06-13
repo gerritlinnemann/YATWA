@@ -1,5 +1,5 @@
 # ⚡ Backend - Bun Runtime
-FROM oven/bun:1-alpine
+FROM oven/bun:canary-alpine
 
 WORKDIR /app
 
